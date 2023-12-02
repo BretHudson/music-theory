@@ -561,6 +561,10 @@
 					quality = QUALITY.MIN;
 					qualityExplicit = true;
 				}
+				if (text.match(/dim/)) {
+					quality = QUALITY.DIM;
+					qualityExplicit = true;
+				}
 
 				const omit5 = text.match(/no5/);
 
@@ -627,11 +631,15 @@
 									span.textContent += '+';
 									break;
 								case QUALITY.DIM:
-									span.textContent += 'o';
+									span.textContent += 'dim';
 									break;
 								case QUALITY.DOM:
 									// nothing
 									break;
+							}
+						} else {
+							if (key && chord.quality === QUALITY.MIN) {
+								span.textContent += 'm';
 							}
 						}
 
@@ -665,24 +673,22 @@
 						additionalOffsets.sort();
 						additionalOffsets.forEach((o) => rawOffsets.add(o));
 
-						// do stuff with the intervals here
-
 						const tempOffsets = Array.from(rawOffsets)
 							.map((v) => v - 1)
 							.sort((a, b) => +a - +b);
 
-						const noteOffsets = tempOffsets.map(
-							(v) =>
-								majorScaleOffsets[
-									(v + chord.degreeIndex) %
-										majorScaleOffsets.length
-								] +
-								Math.floor(
-									(v + chord.degreeIndex) /
-										majorScaleOffsets.length,
-								) *
-									12,
-						);
+						const noteOffsets = tempOffsets
+							.map(
+								(v) =>
+									majorScaleOffsets[
+										v % majorScaleOffsets.length
+									] +
+									Math.floor(v / majorScaleOffsets.length) *
+										12,
+							)
+							.map(
+								(v) => v + majorScaleOffsets[chord.degreeIndex],
+							);
 
 						switch (quality) {
 							case QUALITY.MAJ: {
@@ -776,6 +782,15 @@
 				keys: [...defaultKeys, 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
 			};
 
+			const test_allWhiteKeysProgressions = {
+				name: '[Debug] All White Keys',
+				chords: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'VIIdim'].map(
+					createChord,
+				),
+				theme: 'red',
+				keys: [...defaultKeys, 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
+			};
+
 			const test_scaledIntervalsProgression = {
 				name: '[Debug] Scaled Intervals',
 				chords: ['I', 'I6', 'I7', 'I9', 'I11', 'I13'].map(createChord),
@@ -786,8 +801,9 @@
 			const progressions = [
 				somethingProgression,
 				augmentedClimbProgression,
-				test_allMajorProgressions,
 				test_scaledIntervalsProgression,
+				test_allMajorProgressions,
+				test_allWhiteKeysProgressions,
 			];
 
 			progressions.forEach(({ name, chords, theme, keys }, progIndex) => {
@@ -1027,7 +1043,6 @@
 						`input[type="radio"][value="${PLAY_CHORD.BROKEN_SUSTAINED}"]`,
 					),
 				].forEach((input) => {
-					console.log(input);
 					input.checked = true;
 				});
 			});
