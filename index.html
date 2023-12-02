@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Music Theory</title>
+		<meta name="color-scheme" content="dark light" />
+		<style>
+			#layout {
+				display: grid;
+				grid-template-columns: 700px 220px;
+				grid-template-rows: 400px 400px;
+				gap: 1rem;
+			}
+
+			#keys {
+				display: grid;
+				grid-template-columns: repeat(calc(12 * 8), 1fr);
+				grid-template-rows: 5fr 2fr;
+				width: 700px;
+				height: 400px;
+				background-color: white;
+				border: 2px solid blueviolet;
+			}
+
+			#frets {
+				width: 100%;
+				height: 100%;
+				background-color: #bb8068;
+				border: 2px solid blueviolet;
+				grid-column: 2 / span 1;
+				grid-row: 1 / -1;
+
+				display: grid;
+				grid-template-rows: repeat(13, 1fr);
+				grid-template-columns: repeat(6, 1fr);
+				gap: 2px 0;
+				padding-inline: 0.5rem;
+			}
+
+			button.selected {
+				background-color: forestgreen;
+			}
+
+			.string {
+				display: grid;
+				position: relative;
+				grid-row: 1 / -1;
+				grid-template-rows: subgrid;
+
+				&::after {
+					content: '';
+					position: absolute;
+					background-color: silver;
+					width: 5px;
+					justify-self: center;
+					inset-block: 0;
+				}
+
+				.note {
+					width: 100%;
+					aspect-ratio: 1;
+					border-radius: 50%;
+					z-index: 100;
+					justify-self: center;
+					cursor: pointer;
+					position: relative;
+
+					--fret-color: #444;
+					--fret-height: 0.25rem;
+					--background-color: white;
+
+					&:first-child {
+						--fret-color: black;
+						--fret-height: 0.5rem;
+					}
+
+					&.highlight {
+						--background-color: rgb(0 255 0);
+					}
+
+					&:hover {
+						--background-color: yellow;
+					}
+
+					&::before {
+						content: '';
+						position: absolute;
+						background-color: var(--fret-color);
+						width: 100%;
+						height: var(--fret-height);
+						z-index: -101;
+						top: 50%;
+						transform: translateY(-50%);
+					}
+
+					&::after {
+						content: attr(data-note) ' ';
+						font-size: 0.75rem;
+						color: black;
+						display: grid;
+						place-items: center;
+						position: absolute;
+						width: 1.5rem;
+						left: 50%;
+						top: 50%;
+						transform: translate(-50%, -50%);
+						aspect-ratio: 1;
+						background-color: var(--background-color);
+						border: 2px solid black;
+						border-radius: 50%;
+						z-index: 100;
+						justify-self: center;
+					}
+				}
+			}
+
+			#keys-2 {
+				display: grid;
+				grid-template-columns: repeat(calc(12 * 7), 1fr);
+				grid-template-rows: 5fr 2fr;
+				width: 700px;
+				height: 400px;
+				background-color: white;
+				border: 2px solid blueviolet;
+			}
+
+			.key {
+				--width: 12;
+				position: relative;
+				grid-column-start: calc(
+					var(--width) * var(--note-natural-index) + 1
+				);
+				grid-column-end: span var(--width);
+				grid-row: 1 / span 2;
+				background-color: white;
+				border: 2px solid black;
+				cursor: pointer;
+
+				color: black;
+				display: grid;
+				justify-content: center;
+				align-items: end;
+				font-weight: 700;
+				font-size: 1.35rem;
+
+				&:hover {
+					background-color: yellow;
+				}
+
+				& sub {
+					opacity: 0.5;
+				}
+
+				& * {
+					pointer-events: none;
+				}
+
+				&.sharp {
+					--width: 7;
+					background-color: black;
+					color: white;
+					grid-column-start: calc(
+						var(--width) * var(--note-index) + 1
+					);
+					grid-column-end: span calc(var(--width) + 1);
+					grid-row: 1 / span 1;
+					z-index: 1;
+				}
+
+				&.highlight {
+					--overlay: rgb(0 255 0 / 0.3);
+				}
+
+				&::after {
+					content: '';
+					position: absolute;
+					inset: 0;
+					background: var(--overlay);
+				}
+			}
+
+			#keys-2 {
+				grid-template-columns: repeat(calc(84), 1fr);
+
+				.key {
+					--width: 6;
+					--overlay: transparent;
+					grid-column-start: calc(
+						var(--width) * var(--note-index) + 1
+					);
+					grid-column-end: span calc(var(--width) * 2);
+					grid-row: 1 / span 2;
+					background-color: white;
+					border: 2px solid black;
+					cursor: pointer;
+
+					color: black;
+					display: grid;
+					justify-content: center;
+					align-items: end;
+					font-weight: 700;
+					font-size: 1.35rem;
+
+					&:hover {
+						background-color: yellow;
+					}
+
+					& sub {
+						opacity: 0.5;
+					}
+
+					&.highlight {
+						--overlay: rgb(0 255 0 / 0.3);
+					}
+
+					&.odd {
+						--width: 6;
+						background-color: black;
+						color: white;
+						grid-column-start: calc(
+							var(--width) * var(--note-index) + 1 +
+								calc(var(--width) / 2)
+						);
+						grid-column-end: span calc(var(--width));
+						grid-row: 1 / span 1;
+						z-index: 10;
+
+						&.highlight {
+							--overlay: rgb(0 255 0 / 0.5);
+						}
+					}
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="layout">
+			<div id="keys"></div>
+			<div id="frets"></div>
+			<div id="keys-2"></div>
+		</div>
+
+		<div>
+			<h3>Choose a scale</h3>
+			<div id="buttons"></div>
+		</div>
+
+		<script>
+			const createElement = (className, tagName = 'div') => {
+				const elem = document.createElement(tagName);
+				elem.className = className;
+				return elem;
+			};
+
+			const noteOnClick = (e) => {
+				const key = e.target;
+				const n = +key.getAttribute('data-note-index');
+				const note = key.getAttribute('data-note');
+				const octave = +key.getAttribute('data-octave');
+				console.log(
+					`Key: ${note}${String.fromCharCode(
+						8320 + octave,
+					)} (n: ${n})`,
+				);
+				playSound(getFrequency(octave, n));
+			};
+
+			// from https://en.wikiversity.org/wiki/Template:Music_symbols
+			const UNICODE = {
+				FLAT: '&#x266d;',
+				NATURAL: '&#x266e;',
+				SHARP: '&#x266f;',
+			};
+
+			const notes = [
+				'C',
+				'C#',
+				'D',
+				'D#',
+				'E',
+				'F',
+				'F#',
+				'G',
+				'G#',
+				'A',
+				'A#',
+				'B',
+				'C',
+				'C#',
+			];
+
+			const noteToIndexMap = notes.reduce((acc, val, index) => {
+				if (acc[val] !== undefined) return acc;
+				acc[val] = index;
+				return acc;
+			}, {});
+
+			const buttonsContainer = document.querySelector('#buttons');
+
+			const majorScaleSteps = [2, 2, 1, 2, 2, 2, 1];
+			let accOffset = 0;
+			const majorScaleOffsets = majorScaleSteps.map((offset) => {
+				const start = accOffset;
+				accOffset += offset;
+				return start;
+			});
+
+			const highlightScale = (noteIndex) => {
+				document
+					.querySelectorAll('.highlight')
+					.forEach((key) => key.classList.remove('highlight'));
+				const nodes = majorScaleOffsets.map((offset) => {
+					let o = (offset + noteIndex) % 12;
+					return o;
+					// return {
+					// 	offset: o,
+					// 	note: notes[o],
+					// };
+				});
+				nodes.forEach((nodeIndex) => {
+					const keys = document.querySelectorAll(
+						`[data-note-index="${nodeIndex}"]`,
+					);
+					console.log(keys, `[data-note-index="${nodeIndex}"]`);
+					keys.forEach((key) => key.classList.add('highlight'));
+				});
+			};
+
+			notes.slice(0, 12).forEach((note, noteIndex) => {
+				const button = createElement('', 'button');
+				button.textContent = `${note} major`;
+
+				button.setAttribute('data-note', note);
+				button.setAttribute('data-note-index', noteIndex);
+
+				button.addEventListener('click', (e) => {
+					const selectedButton =
+						document.querySelector('button.selected');
+					if (selectedButton) {
+						selectedButton.classList.remove('selected');
+					}
+
+					e.target.classList.add('selected');
+					highlightScale(noteIndex);
+				});
+
+				buttonsContainer.append(button);
+			});
+
+			const strings = [
+				{ note: 'E', octave: 3 },
+				{ note: 'A', octave: 3 },
+				{ note: 'D', octave: 4 },
+				{ note: 'G', octave: 4 },
+				{ note: 'B', octave: 4 },
+				{ note: 'E', octave: 5 },
+			];
+
+			const frets = document.querySelector('#frets');
+
+			frets.append(
+				...strings.map(({ note, octave }) => {
+					const stringDiv = createElement('string');
+					const stringOffset = noteToIndexMap[note];
+
+					let curOctave = octave;
+					for (let i = 0; i < 13; ++i) {
+						const noteDiv = createElement('note');
+
+						const noteIndex = (i + stringOffset) % 12;
+						const curNote = notes[noteIndex];
+						if (curNote === 'C') {
+							++curOctave;
+						}
+
+						noteDiv.setAttribute('data-note', note);
+						noteDiv.setAttribute('data-note-index', noteIndex);
+						noteDiv.setAttribute('data-octave', curOctave);
+
+						noteDiv.addEventListener('click', noteOnClick);
+
+						if (curNote.endsWith('#')) {
+							noteDiv.classList.add('sharp');
+							noteDiv.classList.add('flat');
+						} else {
+							noteDiv.classList.add('natural');
+						}
+
+						noteDiv.setAttribute(
+							'data-note',
+							notes[noteIndex].replace(
+								'#',
+								String.fromCharCode(9839),
+							) + String.fromCharCode(8320 + curOctave),
+						);
+
+						stringDiv.append(noteDiv);
+					}
+					return stringDiv;
+				}),
+			);
+
+			// C0 = 16.35160 Hz
+
+			const frequencyOfA = 110; // A(1)
+
+			const getFrequency = (octave, n) =>
+				27.5 * Math.pow(2, octave) * Math.pow(2, (n - 9) / 12);
+
+			const expectedFreq = [
+				261.6256, // C	60
+				277.1826, // C#	61
+				293.6648, // D	62
+				311.127, //	D#	63
+				329.6276, // E	64
+				349.2282, // F	65
+				369.9944, // F#	66
+				391.9954, // G	67
+				415.3047, // G#	68
+				440.0, // A	69
+			];
+			const freqs = [];
+			for (let i = 0; i < 1; ++i) {
+				const freq = getFrequency(4, i);
+				freqs.push(freq);
+			}
+
+			const keysDiv = document.querySelector('#keys');
+			const keys2Div = document.querySelector('#keys-2');
+
+			let nn = 0;
+			notes.forEach((note, index) => {
+				const key = createElement('key');
+				key.addEventListener('click', noteOnClick);
+
+				const noteIndex = index % 12;
+				const octave = 4 + Math.floor(index / 12);
+
+				key.setAttribute('data-note', note);
+				key.setAttribute('data-note-index', noteIndex);
+				key.setAttribute('data-octave', octave);
+
+				key.style.setProperty('--note-natural-index', nn);
+				key.style.setProperty('--note-index', index);
+
+				if (note.endsWith('#')) {
+					key.classList.add('sharp');
+					key.classList.add('flat');
+				} else {
+					key.classList.add('natural');
+					++nn;
+				}
+
+				const text = createElement('text');
+
+				const noteText = createElement('note', 'span');
+				noteText.innerHTML = note.replace('#', UNICODE.SHARP);
+
+				const octaveText = createElement('octave', 'sub');
+				octaveText.innerHTML = octave;
+
+				text.append(noteText, octaveText);
+				key.append(text);
+				keysDiv.append(key);
+			});
+
+			nn = 0;
+			notes.forEach((note, index) => {
+				const key = createElement('key');
+				key.addEventListener('click', noteOnClick);
+
+				const noteIndex = index % 12;
+				const octave = 4 + Math.floor(index / 12);
+
+				key.setAttribute('data-note', note);
+				key.setAttribute('data-note-index', noteIndex);
+				key.setAttribute('data-octave', 4);
+
+				key.style.setProperty('--note-natural-index', nn);
+				key.style.setProperty('--note-index', index);
+
+				if (index % 2) {
+					key.classList.add('odd');
+				} else {
+					key.classList.add('even');
+				}
+
+				if (note.endsWith('#')) {
+					key.classList.add('sharp');
+					key.classList.add('flat');
+				} else {
+					key.classList.add('natural');
+					++nn;
+				}
+
+				const text = createElement('text');
+
+				const noteText = createElement('note', 'span');
+				noteText.innerHTML = note.replace('#', UNICODE.SHARP);
+
+				const octaveText = createElement('octave', 'sub');
+				octaveText.innerHTML = octave;
+
+				text.append(noteText, octaveText);
+				key.append(text);
+				keys2Div.append(key);
+			});
+
+			// Create an audio context.
+			const audioContext = new AudioContext();
+
+			const playSound = (frequency) => {
+				console.log(`Playing ${frequency} Hz`);
+				const oscillator = audioContext.createOscillator();
+				oscillator.frequency.value = frequency;
+				oscillator.type = 'sine';
+				oscillator.connect(audioContext.destination);
+
+				oscillator.start();
+
+				setTimeout(() => {
+					oscillator.stop();
+				}, 1e3);
+			};
+		</script>
+	</body>
+</html>
