@@ -12,6 +12,13 @@
 				box-sizing: border-box;
 			}
 
+			@font-face {
+				src: url('/assets/fonts/Bahnschrift.woff2')
+					format('woff2-variations');
+				font-family: 'Bahnschrift';
+				font-style: normal;
+			}
+
 			:root {
 				@media (prefers-color-scheme: light) {
 					--color-fg: #000;
@@ -33,7 +40,7 @@
 			}
 
 			body {
-				font-family: sans-serif;
+				font-family: 'Bahnschrift', sans-serif;
 			}
 
 			/* TODO: do something clever with overflow to allow black notes at the beginning to start before the keyboard
