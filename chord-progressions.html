@@ -43,6 +43,14 @@
 				font-family: 'Bahnschrift', sans-serif;
 			}
 
+			.keyChoice {
+				display: flex;
+
+				& :is(button) {
+					/**/
+				}
+			}
+
 			/* TODO: do something clever with overflow to allow black notes at the beginning to start before the keyboard
 
 			this would also allow for clipping of the first white note */
@@ -131,7 +139,8 @@
 
 			.settings {
 				display: flex;
-				justify-content: space-between;
+				flex-wrap: wrap;
+				justify-content: center;
 				align-items: center;
 				font-size: 1.5rem;
 				gap: 1rem;
@@ -143,6 +152,38 @@
 					font-weight: 700;
 					width: 6.25rem;
 					padding: 0.5rem 0.75rem;
+				}
+
+				.keyOptions {
+					display: flex;
+					gap: 0.25rem;
+					flex-wrap: wrap;
+					justify-content: center;
+
+					.option {
+						cursor: pointer;
+						aspect-ratio: 1;
+						width: 2.5rem;
+						background: #6b6b6b;
+						& :is(input[type='radio']) {
+							display: none;
+						}
+
+						& :is(label) {
+							cursor: inherit;
+							display: grid;
+							place-items: center;
+							width: 100%;
+							height: 100%;
+							&:hover {
+								background: var(--theme);
+							}
+						}
+
+						& :is(input[type='radio']:checked + label) {
+							background: var(--theme);
+						}
+					}
 				}
 			}
 
@@ -366,9 +407,21 @@
 				});
 			};
 
-			const highlightChord = (keyboardElem, chord, key = 'C') => {
-				chord.getNotes(key).forEach((noteIndex) => {
-					const key = keyboardElem.children.item(noteIndex + 1);
+			const highlightChord = (keyboardElem, chord, key) => {
+				const keys = [...keyboardElem.querySelectorAll('.highlight')];
+				keys.forEach((key) => key.classList.remove('highlight'));
+
+				const leftIndex = +keyboardElem.children
+					.item(0)
+					.getAttribute('data-note-index');
+
+				const chordNotes = chord.getNotes(key);
+				let offset = 0 - leftIndex - keyboardOffset;
+				// let offset = 1 + keyboardOffset;
+				while (offset < 0) offset += 12;
+				chordNotes.forEach((noteIndex) => {
+					let itemIndex = noteIndex + offset;
+					const key = keyboardElem.children.item(itemIndex);
 					if (key) key.classList.add('highlight');
 				});
 			};
@@ -400,18 +453,59 @@
 
 			const keysDivs = document.querySelectorAll('.keys');
 
-			const defaultKeys = ['B', ...notes, 'C', 'C#'];
+			const defaultKeys = [
+				'B',
+				...notes,
+				...notes,
+				// 'C',
+				// 'C#',
+				// 'D',
+				// 'D#',
+				// 'E',
+				// 'F',
+				// 'F#',
+				// 'G',
+				// 'G#',
+			];
 
-			const createKeyboard = (keysDiv, keys = defaultKeys) => {
-				let nn = 0;
-				keysDiv.style.setProperty(
-					'--num-white-keys',
-					keys.filter((k) => !k.endsWith('#')).length,
+			let keyboardOffset = 0;
+
+			const configureKeyboard = (keysDiv, _keys, key = 'C') => {
+				const indexOfKey = noteToIndexMap[key];
+				const leftKeyIndex = noteToIndexMap[_keys[0]];
+
+				const offset = 1;
+				const allKeysSkipped = _keys.slice(offset, indexOfKey + offset);
+				const whiteKeysSkipped = allKeysSkipped.filter(
+					(n) => !n.endsWith('#'),
 				);
+
+				const keys = [..._keys];
+				keyboardOffset = 0;
+				// for (
+				// 	let i = 0;
+				// 	i < whiteKeysSkipped.length;
+				// 	++i, ++keyboardOffset
+				// ) {
+				// 	const k = keys.shift();
+				// 	const lastKeyIndex = noteToIndexMap[keys.at(-1)];
+				// 	const nextKeyIndex = (lastKeyIndex + 1) % 12;
+				// 	keys.push(notes[nextKeyIndex]);
+
+				// 	if (keys[0].endsWith('#')) {
+				// 		--i;
+				// 	}
+				// }
+
 				let curOctave = 3;
-				keys.forEach((note, arrIndex) => {
-					const key = createElement('key');
-					// key.addEventListener('click', noteOnClick);
+				let nn = 0;
+				// if (key !== 'C' && key !== 'C#') curOctave = 4;
+				[...keysDiv.children].forEach((key, arrIndex) => {
+					key.classList.remove('natural');
+					key.classList.remove('sharp');
+					key.classList.remove('flat');
+
+					const note = keys[arrIndex];
 
 					const index = noteToIndexMap[note];
 
@@ -419,6 +513,11 @@
 					if (noteIndex === 0) ++curOctave;
 
 					const octave = curOctave;
+
+					const noteText = key.querySelector('.data-note');
+					noteText.innerHTML = note.replace('#', UNICODE.SHARP);
+					const octaveText = key.querySelector('.data-octave');
+					octaveText.innerHTML = octave;
 
 					key.setAttribute('data-note', note);
 					key.setAttribute('data-note-index', noteIndex);
@@ -435,22 +534,38 @@
 						key.classList.add('natural');
 						++nn;
 					}
+				});
+			};
+
+			const createKeyboard = (
+				keysDiv,
+				keys = defaultKeys,
+				currentKey = 'C',
+			) => {
+				keysDiv.style.setProperty(
+					'--num-white-keys',
+					keys.filter((k) => !k.endsWith('#')).length,
+				);
+				const keyElems = keys.map((note, arrIndex) => {
+					const key = createElement('key');
+					key.addEventListener('click', noteOnClick);
 
 					const text = createElement('text');
 
 					const noteText = createElement('data-note', 'span');
-					noteText.innerHTML = note.replace('#', UNICODE.SHARP);
 
 					const octaveText = createElement('data-octave', 'sub');
-					octaveText.innerHTML = octave;
 
 					text.append(noteText, octaveText);
 					key.append(text);
 					keysDiv.append(key);
+
+					configureKeyboard(keysDiv, keys, currentKey);
 				});
 			};
 
-			keysDivs.forEach((k) => createKeyboard(k));
+			// console.log({ keysDivs });
+			// keysDivs.forEach((k) => createKeyboard(k));
 
 			// Create an audio context.
 			const audioContext = new AudioContext();
@@ -618,8 +733,9 @@
 						div.innerHTML = '';
 						div.textContent = key
 							? notes[
-									majorScaleOffsets[chord.degreeIndex] +
-										noteToIndexMap[key]
+									(majorScaleOffsets[chord.degreeIndex] +
+										noteToIndexMap[key]) %
+										12
 							  ]
 							: chord.degree;
 
@@ -762,7 +878,7 @@
 				name: 'The "Something" Progression',
 				chords: ['I', 'IM7', 'I7', 'IV'].map(createChord),
 				theme: 'orange',
-				keys: [...defaultKeys, 'D', 'D#'],
+				keys: [...defaultKeys],
 			};
 
 			somethingProgression.chords[3].inversion = 2;
@@ -774,7 +890,7 @@
 					createChord,
 				),
 				theme: 'blue',
-				keys: [...defaultKeys, 'D', 'D#'],
+				keys: [...defaultKeys],
 			};
 
 			augmentedClimbProgression.chords[4].inversion = 2;
@@ -786,7 +902,7 @@
 					createChord,
 				),
 				theme: 'red',
-				keys: [...defaultKeys, 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
+				keys: [...defaultKeys],
 			};
 
 			const test_allWhiteKeysProgressions = {
@@ -795,14 +911,14 @@
 					createChord,
 				),
 				theme: 'red',
-				keys: [...defaultKeys, 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
+				keys: [...defaultKeys],
 			};
 
 			const test_scaledIntervalsProgression = {
 				name: '[Debug] Scaled Intervals',
 				chords: ['I', 'I6', 'I7', 'I9', 'I11', 'I13'].map(createChord),
 				theme: 'red',
-				keys: [...defaultKeys, 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
+				keys: [...defaultKeys],
 			};
 
 			const progressions = [
@@ -814,6 +930,25 @@
 			];
 
 			progressions.forEach(({ name, chords, theme, keys }, progIndex) => {
+				let currentKey = 'C';
+
+				const changeKey = (newKey = 'C') => {
+					currentKey = newKey;
+
+					chords.forEach((chord, i) => {
+						chord.setHTML(chordTextElements[i], currentKey);
+					});
+
+					// change the keyboard layout
+					configureKeyboard(mainKeyboardElem, keys, currentKey);
+
+					[...showChordsContent.children].forEach((keysElem, i) => {
+						configureKeyboard(keysElem, keys, currentKey);
+
+						highlightChord(keysElem, chords[i], currentKey);
+					});
+				};
+
 				const wrapper = createElement('wrapper');
 				wrapper.style.setProperty('--theme', `var(--dbp-${theme})`);
 				wrapper.style.setProperty(
@@ -855,7 +990,7 @@
 						// set up the interval
 
 						const frequences = chords[index]
-							.getNotes('C')
+							.getNotes(currentKey)
 							.map((n) => getFrequency(4, n));
 						const length = playChord(curChordType, ...frequences);
 
@@ -935,7 +1070,7 @@
 							highlightChord(
 								mainKeyboardElem,
 								chords[index],
-								'C',
+								currentKey,
 							);
 						},
 						// onComplete
@@ -973,13 +1108,39 @@
 					},
 				);
 
+				// Settings / Key
+				const keyOptionsWrapper = createElement('keyOptions');
+				notes.forEach((note, i) => {
+					const wrapper = createElement('option');
+					keyOptionsWrapper.append(wrapper);
+
+					const id = `${progIndex}-key-${i}`;
+
+					const radio = createElement(undefined, 'input');
+					radio.setAttribute('type', 'radio');
+					radio.setAttribute('name', `key-${progIndex}`);
+					radio.setAttribute('value', note);
+					radio.addEventListener('click', () => {
+						changeKey(note);
+					});
+					radio.id = id;
+					wrapper.append(radio);
+
+					const label = createElement(undefined, 'label');
+					label.setAttribute('for', id);
+					label.textContent = note;
+					wrapper.append(label);
+				});
+				settings.append(keyOptionsWrapper);
+
 				// main keyboard
 				const mainKeyboardElem = createElement('keys hide-note-names');
-				createKeyboard(mainKeyboardElem, keys);
+				createKeyboard(mainKeyboardElem, keys, currentKey);
 				wrapper.append(mainKeyboardElem);
 
 				// <details>
 				const showChords = createElement(undefined, 'details');
+				// showChords.setAttribute('open', undefined);
 				wrapper.append(showChords);
 
 				const showChordsSummary = createElement(undefined, 'summary');
@@ -989,6 +1150,8 @@
 				const showChordsContent = createElement('contents');
 				showChords.append(showChordsContent);
 
+				const chordTextElements = [];
+
 				// each chord
 				chords.forEach((chord, i) => {
 					const degreeElem = createElement('degree');
@@ -997,13 +1160,13 @@
 						stopAllNotes();
 
 						const frequences = chord
-							.getNotes('C')
+							.getNotes(currentKey)
 							.map((n) => getFrequency(4, n));
 						playChord(curChordType, ...frequences);
 					});
 
 					degreeElem.addEventListener('mouseenter', () => {
-						highlightChord(mainKeyboardElem, chord, 'C');
+						highlightChord(mainKeyboardElem, chord, currentKey);
 					});
 
 					degreeElem.addEventListener('mouseleave', () => {
@@ -1024,12 +1187,14 @@
 					const chordElem = createElement('chord');
 					chordElem.append(createElement());
 					const chordText = createElement('text');
-					chord.setHTML(chordText, 'C');
+					chord.setHTML(chordText, currentKey);
 					chordElem.append(chordText);
 					if (i === chords.length - 1) {
 						chordElem.append(createElement());
 						chordElem.append(createElement());
 					}
+
+					chordTextElements.push(chordText);
 
 					degreeElem.append(nameElem);
 					degreeElem.append(chordElem);
@@ -1037,10 +1202,10 @@
 					progressionElem.append(degreeElem);
 
 					const keyboardElem = createElement('keys hide-note-names');
-					createKeyboard(keyboardElem, keys);
+					createKeyboard(keyboardElem, keys, currentKey);
 					showChordsContent.append(keyboardElem);
 
-					highlightChord(keyboardElem, chord, 'C');
+					highlightChord(keyboardElem, chord, currentKey);
 				});
 
 				document.body.append(wrapper);
@@ -1048,6 +1213,14 @@
 				[
 					...document.body.querySelectorAll(
 						`input[type="radio"][value="${PLAY_CHORD.BROKEN_SUSTAINED}"]`,
+					),
+				].forEach((input) => {
+					input.checked = true;
+				});
+
+				[
+					...document.body.querySelectorAll(
+						`input[type="radio"][value="C"]`,
 					),
 				].forEach((input) => {
 					input.checked = true;
