@@ -30,6 +30,8 @@
 					--color-bg: #000;
 				}
 
+				--width: 800px;
+
 				--dbp-red: rgb(255, 28, 36);
 				--dbp-red-raw: 255 28 36;
 				--dbp-blue: #3cacf7;
@@ -41,6 +43,17 @@
 
 			body {
 				font-family: 'Bahnschrift', sans-serif;
+			}
+
+			header {
+				text-align: center;
+				max-width: 500px;
+				margin-inline: auto;
+				margin-bottom: 2rem;
+
+				& :is(h3) {
+					margin: 0;
+				}
 			}
 
 			.keyChoice {
@@ -280,7 +293,7 @@
 				align-items: center;
 				flex-direction: column;
 				border: 3px solid var(--theme);
-				width: 800px;
+				width: var(--width);
 				max-width: 100%;
 				padding: 3rem;
 				margin-inline: auto;
@@ -293,16 +306,32 @@
 				+ .wrapper {
 					margin-top: 1rem;
 				}
-			}
 
-			h3 {
-				font-size: 2.5rem;
-				text-transform: uppercase;
-				text-align: center;
+				& :is(h3) {
+					font-size: 2.5rem;
+					text-transform: uppercase;
+					text-align: center;
+				}
 			}
 		</style>
 	</head>
 	<body>
+		<header>
+			<h1>Chord Progression Visualizer</h1>
+			<h3>Why does this exist?</h3>
+			<p>
+				While watching one of the videos on David Bennett Piano's
+				<a
+					href="https://www.youtube.com/playlist?list=PLlx2eo2tD6KpfGmE-MXwcIRQh21neAKsK"
+					>Chord Progressions</a
+				>
+				playlist, I found myself scrubbing backwards and forwards
+				through videos to see each chord, as there was only one shown at
+				a time. To save myself a few seconds, I spent 4 hours working on
+				this interface. Worth it?
+			</p>
+			<p>Absolutely.</p>
+		</header>
 		<script>
 			let playing = [];
 
