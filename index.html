@@ -80,6 +80,14 @@
 						--background-color: rgb(0 255 0);
 					}
 
+					&.tonic {
+						--background-color: rgb(0 138 0);
+						font-weight: 700;
+						&::after {
+							color: white;
+						}
+					}
+
 					&:hover {
 						--background-color: yellow;
 					}
@@ -169,6 +177,14 @@
 					z-index: 1;
 				}
 
+				&.tonic {
+					background-color: lime;
+					font-weight: 700;
+					&:not(.natural) {
+						color: black;
+					}
+				}
+
 				&.highlight {
 					--overlay: rgb(0 255 0 / 0.3);
 				}
@@ -209,6 +225,13 @@
 
 					& sub {
 						opacity: 0.5;
+					}
+
+					&.tonic {
+						background-color: lime;
+						&:not(.natural) {
+							color: black;
+						}
 					}
 
 					&.highlight {
@@ -277,16 +300,19 @@
 			];
 
 			const highlightScale = (noteIndex, scaleIndex) => {
-				document
-					.querySelectorAll('.highlight')
-					.forEach((key) => key.classList.remove('highlight'));
+				document.querySelectorAll('.highlight').forEach((key) => {
+					key.classList.remove('tonic');
+					key.classList.remove('highlight');
+				});
 				const nodes = scales[scaleIndex].offsets.map((offset) => {
 					return (offset + noteIndex) % 12;
 				});
-				nodes.forEach((nodeIndex) => {
+				nodes.forEach((nodeIndex, i) => {
 					const keys = document.querySelectorAll(
 						`[data-note-index="${nodeIndex}"]`,
 					);
+					if (i === 0)
+						keys.forEach((key) => key.classList.add('tonic'));
 					keys.forEach((key) => key.classList.add('highlight'));
 				});
 			};
@@ -372,7 +398,7 @@
 			const keys2Div = document.querySelector('#keys-2');
 
 			let nn = 0;
-			notes.forEach((note, index) => {
+			[...notes, 'C', 'C#'].forEach((note, index) => {
 				const key = createElement('key');
 				key.addEventListener('click', noteOnClick);
 
@@ -408,7 +434,7 @@
 			});
 
 			nn = 0;
-			notes.forEach((note, index) => {
+			[...notes, 'C', 'C#'].forEach((note, index) => {
 				const key = createElement('key');
 				key.addEventListener('click', noteOnClick);
 
