@@ -201,14 +201,24 @@
 			}
 
 			.progression {
-				--bar-width: 0.5rem;
-				--bar-padding: 1rem;
-
 				display: grid;
-				grid-template-columns: repeat(var(--length), 1fr);
+				grid-template-columns: repeat(var(--columns), 1fr);
 				width: 100%;
-				font-size: 2rem;
 				font-weight: 700;
+
+				@media (width < 35rem) {
+					font-size: 1rem;
+					--bar-width: 0.25rem;
+					--bar-padding: 0.5rem;
+					--columns: min(4, var(--length));
+				}
+
+				@media (width >= 35rem) {
+					font-size: 2rem;
+					--bar-width: 0.5rem;
+					--bar-padding: 1rem;
+					--columns: var(--length);
+				}
 
 				&.playing {
 					pointer-events: none;
@@ -234,7 +244,7 @@
 						grid-template-columns: subgrid;
 
 						> * {
-							padding-block: 1rem;
+							padding-block: var(--bar-padding);
 						}
 
 						.text {
@@ -308,7 +318,12 @@
 				}
 
 				& :is(h3) {
-					font-size: 2.5rem;
+					@media (width < 35rem) {
+						font-size: 2rem;
+					}
+					@media (width >= 35rem) {
+						font-size: 2.5rem;
+					}
 					text-transform: uppercase;
 					text-align: center;
 				}
