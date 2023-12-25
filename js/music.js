@@ -48,13 +48,20 @@ const components = [
 const componentToIndexMap = createMapToIndices(components);
 componentToIndexMap['d7'] = componentToIndexMap['M6'];
 
+const computeOffsets = (scaleSteps) => {
+	let accOffset = 0;
+	return scaleSteps.map((offset) => {
+		const start = accOffset;
+		accOffset += offset;
+		return start;
+	});
+};
+
 const majorScaleSteps = [2, 2, 1, 2, 2, 2, 1];
-let accOffset = 0;
-const majorScaleOffsets = majorScaleSteps.map((offset) => {
-	const start = accOffset;
-	accOffset += offset;
-	return start;
-});
+const majorScaleOffsets = computeOffsets(majorScaleSteps);
+
+const minorScaleSteps = [2, 1, 2, 2, 1, 2, 2];
+const minorScaleOffsets = computeOffsets(minorScaleSteps);
 
 const getFrequency = (octave, noteIndex) =>
 	27.5 * Math.pow(2, octave) * Math.pow(2, (noteIndex - 9) / 12);

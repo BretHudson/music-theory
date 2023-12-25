@@ -5,6 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Music Theory</title>
 		<meta name="color-scheme" content="dark light" />
+		<script src="./js/music.js"></script>
 		<style>
 			#layout {
 				display: grid;
@@ -235,24 +236,18 @@
 		</style>
 	</head>
 	<body>
+		<div>
+			<h3>Choose a scale</h3>
+			<div id="buttons"></div>
+		</div>
+
 		<div id="layout">
 			<div id="keys"></div>
 			<div id="frets"></div>
 			<div id="keys-2"></div>
 		</div>
 
-		<div>
-			<h3>Choose a scale</h3>
-			<div id="buttons"></div>
-		</div>
-
 		<script>
-			const createElement = (className, tagName = 'div') => {
-				const elem = document.createElement(tagName);
-				elem.className = className;
-				return elem;
-			};
-
 			const noteOnClick = (e) => {
 				const key = e.target;
 				const n = +key.getAttribute('data-note-index');
@@ -266,87 +261,59 @@
 				playSound(getFrequency(octave, n));
 			};
 
-			// from https://en.wikiversity.org/wiki/Template:Music_symbols
-			const UNICODE = {
-				FLAT: '&#x266d;',
-				NATURAL: '&#x266e;',
-				SHARP: '&#x266f;',
-			};
-
-			const notes = [
-				'C',
-				'C#',
-				'D',
-				'D#',
-				'E',
-				'F',
-				'F#',
-				'G',
-				'G#',
-				'A',
-				'A#',
-				'B',
-				'C',
-				'C#',
-			];
-
-			const noteToIndexMap = notes.reduce((acc, val, index) => {
-				if (acc[val] !== undefined) return acc;
-				acc[val] = index;
-				return acc;
-			}, {});
-
 			const buttonsContainer = document.querySelector('#buttons');
 
-			const majorScaleSteps = [2, 2, 1, 2, 2, 2, 1];
-			let accOffset = 0;
-			const majorScaleOffsets = majorScaleSteps.map((offset) => {
-				const start = accOffset;
-				accOffset += offset;
-				return start;
-			});
+			const scales = [
+				{
+					name: 'major',
+					offsets: majorScaleOffsets,
+					steps: majorScaleSteps,
+				},
+				{
+					name: 'minor',
+					offsets: minorScaleOffsets,
+					steps: minorScaleSteps,
+				},
+			];
 
-			const highlightScale = (noteIndex) => {
+			const highlightScale = (noteIndex, scaleIndex) => {
 				document
 					.querySelectorAll('.highlight')
 					.forEach((key) => key.classList.remove('highlight'));
-				const nodes = majorScaleOffsets.map((offset) => {
-					let o = (offset + noteIndex) % 12;
-					return o;
-					// return {
-					// 	offset: o,
-					// 	note: notes[o],
-					// };
+				const nodes = scales[scaleIndex].offsets.map((offset) => {
+					return (offset + noteIndex) % 12;
 				});
 				nodes.forEach((nodeIndex) => {
 					const keys = document.querySelectorAll(
 						`[data-note-index="${nodeIndex}"]`,
 					);
-					console.log(keys, `[data-note-index="${nodeIndex}"]`);
 					keys.forEach((key) => key.classList.add('highlight'));
 				});
 			};
 
-			notes.slice(0, 12).forEach((note, noteIndex) => {
-				const button = createElement('', 'button');
-				button.textContent = `${note} major`;
+			for (let scaleIndex = 0; scaleIndex < scales.length; ++scaleIndex) {
+				notes.slice(0, 12).forEach((note, noteIndex) => {
+					const button = createElement('', 'button');
+					button.textContent = `${note} ${scales[scaleIndex].name}`;
 
-				button.setAttribute('data-note', note);
-				button.setAttribute('data-note-index', noteIndex);
+					button.setAttribute('data-note', note);
+					button.setAttribute('data-note-index', noteIndex);
 
-				button.addEventListener('click', (e) => {
-					const selectedButton =
-						document.querySelector('button.selected');
-					if (selectedButton) {
-						selectedButton.classList.remove('selected');
-					}
+					button.addEventListener('click', (e) => {
+						const selectedButton =
+							document.querySelector('button.selected');
+						if (selectedButton) {
+							selectedButton.classList.remove('selected');
+						}
 
-					e.target.classList.add('selected');
-					highlightScale(noteIndex);
+						e.target.classList.add('selected');
+						highlightScale(noteIndex, scaleIndex);
+					});
+
+					buttonsContainer.append(button);
 				});
-
-				buttonsContainer.append(button);
-			});
+				buttonsContainer.append(createElement(undefined, 'br'));
+			}
 
 			const strings = [
 				{ note: 'E', octave: 3 },
@@ -400,31 +367,6 @@
 					return stringDiv;
 				}),
 			);
-
-			// C0 = 16.35160 Hz
-
-			const frequencyOfA = 110; // A(1)
-
-			const getFrequency = (octave, n) =>
-				27.5 * Math.pow(2, octave) * Math.pow(2, (n - 9) / 12);
-
-			const expectedFreq = [
-				261.6256, // C	60
-				277.1826, // C#	61
-				293.6648, // D	62
-				311.127, //	D#	63
-				329.6276, // E	64
-				349.2282, // F	65
-				369.9944, // F#	66
-				391.9954, // G	67
-				415.3047, // G#	68
-				440.0, // A	69
-			];
-			const freqs = [];
-			for (let i = 0; i < 1; ++i) {
-				const freq = getFrequency(4, i);
-				freqs.push(freq);
-			}
 
 			const keysDiv = document.querySelector('#keys');
 			const keys2Div = document.querySelector('#keys-2');
@@ -506,23 +448,6 @@
 				key.append(text);
 				keys2Div.append(key);
 			});
-
-			// Create an audio context.
-			const audioContext = new AudioContext();
-
-			const playSound = (frequency) => {
-				console.log(`Playing ${frequency} Hz`);
-				const oscillator = audioContext.createOscillator();
-				oscillator.frequency.value = frequency;
-				oscillator.type = 'sine';
-				oscillator.connect(audioContext.destination);
-
-				oscillator.start();
-
-				setTimeout(() => {
-					oscillator.stop();
-				}, 1e3);
-			};
 		</script>
 	</body>
 </html>
