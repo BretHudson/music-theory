@@ -5,6 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Music Theory</title>
 		<meta name="color-scheme" content="dark light" />
+		<script src="./js/music.js"></script>
 		<style>
 			*,
 			*::before,
@@ -13,8 +14,7 @@
 			}
 
 			@font-face {
-				src: url('/assets/fonts/Bahnschrift.woff2')
-					format('woff2-variations');
+				src: url('/fonts/Bahnschrift.woff2') format('woff2-variations');
 				font-family: 'Bahnschrift';
 				font-style: normal;
 			}
@@ -313,6 +313,31 @@
 					text-align: center;
 				}
 			}
+
+			.progression-item {
+				> h4 {
+					font-size: 1.75rem;
+					display: flex;
+					gap: 0.25em;
+					margin-block: 0.75rem 0.5rem;
+				}
+
+				.index {
+					opacity: 0.6;
+				}
+
+				.degree {
+					color: var(--theme);
+					&::before {
+						content: '[';
+						padding-right: 0.1ch;
+					}
+					&::after {
+						content: ']';
+						padding-left: 0.1ch;
+					}
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -333,27 +358,6 @@
 			<p>Absolutely.</p>
 		</header>
 		<script>
-			let playing = [];
-
-			const stopAllNotes = () => {
-				playing.forEach((osc) => osc.stop());
-				playing = [];
-			};
-
-			const QUALITY = {
-				MAJ: 'major',
-				MIN: 'minor',
-				AUG: 'augmented',
-				DIM: 'diminished',
-				DOM: 'dominant',
-			};
-
-			const createElement = (className, tagName = 'div') => {
-				const elem = document.createElement(tagName);
-				if (className) elem.className = className;
-				return elem;
-			};
-
 			const noteOnClick = (e) => {
 				const key = e.target;
 				const n = +key.getAttribute('data-note-index');
@@ -367,64 +371,7 @@
 				playSound(getFrequency(octave, n));
 			};
 
-			// from https://en.wikiversity.org/wiki/Template:Music_symbols
-			const UNICODE = {
-				FLAT: '&#x266d;',
-				NATURAL: '&#x266e;',
-				SHARP: '&#x266f;',
-			};
-
-			const createMapToIndices = (arr) =>
-				arr.reduce((acc, val, index) => {
-					if (acc[val] !== undefined) return acc;
-					acc[val] = index;
-					return acc;
-				}, {});
-
-			const notes = [
-				'C',
-				'C#',
-				'D',
-				'D#',
-				'E',
-				'F',
-				'F#',
-				'G',
-				'G#',
-				'A',
-				'A#',
-				'B',
-			];
-
-			const components = [
-				'P1',
-				'm2',
-				'M2',
-				'm3',
-				'M3',
-				'P4',
-				'd5',
-				'P5',
-				'A5',
-				'M6',
-				'm7',
-				'M7',
-			];
-
-			const noteToIndexMap = createMapToIndices(notes);
-
-			const componentToIndexMap = createMapToIndices(components);
-			componentToIndexMap['d7'] = componentToIndexMap['M6'];
-
 			const buttonsContainer = document.querySelector('#buttons');
-
-			const majorScaleSteps = [2, 2, 1, 2, 2, 2, 1];
-			let accOffset = 0;
-			const majorScaleOffsets = majorScaleSteps.map((offset) => {
-				const start = accOffset;
-				accOffset += offset;
-				return start;
-			});
 
 			const highlightScale = (noteIndex) => {
 				const nodes = majorScaleOffsets.map((offset) => {
@@ -445,8 +392,7 @@
 					.getAttribute('data-note-index');
 
 				const chordNotes = chord.getNotes(key);
-				let offset = 0 - leftIndex - keyboardOffset;
-				// let offset = 1 + keyboardOffset;
+				let offset = 0 - leftIndex;
 				while (offset < 0) offset += 12;
 				chordNotes.forEach((noteIndex) => {
 					let itemIndex = noteIndex + offset;
@@ -455,49 +401,9 @@
 				});
 			};
 
-			// C0 = 16.35160 Hz
-
-			const frequencyOfA = 110; // A(1)
-
-			const getFrequency = (octave, n) =>
-				27.5 * Math.pow(2, octave) * Math.pow(2, (n - 9) / 12);
-
-			const expectedFreq = [
-				261.6256, // C	60
-				277.1826, // C#	61
-				293.6648, // D	62
-				311.127, //	D#	63
-				329.6276, // E	64
-				349.2282, // F	65
-				369.9944, // F#	66
-				391.9954, // G	67
-				415.3047, // G#	68
-				440.0, // A	69
-			];
-			const freqs = [];
-			for (let i = 0; i < 1; ++i) {
-				const freq = getFrequency(4, i);
-				freqs.push(freq);
-			}
-
 			const keysDivs = document.querySelectorAll('.keys');
 
-			const defaultKeys = [
-				'B',
-				...notes,
-				...notes,
-				// 'C',
-				// 'C#',
-				// 'D',
-				// 'D#',
-				// 'E',
-				// 'F',
-				// 'F#',
-				// 'G',
-				// 'G#',
-			];
-
-			let keyboardOffset = 0;
+			const defaultKeys = ['B', ...notes, ...notes];
 
 			const configureKeyboard = (keysDiv, _keys, key = 'C') => {
 				const indexOfKey = noteToIndexMap[key];
@@ -510,25 +416,9 @@
 				);
 
 				const keys = [..._keys];
-				keyboardOffset = 0;
-				// for (
-				// 	let i = 0;
-				// 	i < whiteKeysSkipped.length;
-				// 	++i, ++keyboardOffset
-				// ) {
-				// 	const k = keys.shift();
-				// 	const lastKeyIndex = noteToIndexMap[keys.at(-1)];
-				// 	const nextKeyIndex = (lastKeyIndex + 1) % 12;
-				// 	keys.push(notes[nextKeyIndex]);
-
-				// 	if (keys[0].endsWith('#')) {
-				// 		--i;
-				// 	}
-				// }
 
 				let curOctave = 3;
 				let nn = 0;
-				// if (key !== 'C' && key !== 'C#') curOctave = 4;
 				[...keysDiv.children].forEach((key, arrIndex) => {
 					key.classList.remove('natural');
 					key.classList.remove('sharp');
@@ -593,319 +483,9 @@
 				});
 			};
 
-			// console.log({ keysDivs });
-			// keysDivs.forEach((k) => createKeyboard(k));
-
-			// Create an audio context.
-			const audioContext = new AudioContext();
-
-			const playSound = (frequency, options) => {
-				const {
-					gainValue = 1,
-					pan = 0,
-					when = 0,
-					length = 1e3,
-				} = options ?? {};
-
-				console.log(
-					`Playing ${frequency.toFixed(
-						2,
-					)} Hz (gain: ${gainValue.toFixed(2)}, pan: ${pan.toFixed(
-						2,
-					)}, when: ${when.toFixed(2)})`,
-				);
-
-				const panner = audioContext.createPanner();
-				panner.panningModel = 'equalpower';
-				panner.setPosition(pan, 0, 0);
-				panner.connect(audioContext.destination);
-
-				const gainNode = audioContext.createGain();
-				gainNode.gain.value = gainValue;
-				gainNode.connect(panner);
-
-				const oscillator = audioContext.createOscillator();
-				oscillator.type = 'sine';
-				oscillator.frequency.value = frequency;
-
-				// connect the gainNode
-				oscillator.connect(gainNode);
-				gainNode.gain.value = gainValue;
-
-				const play = (when) => {
-					oscillator.start(when);
-
-					playing.push(oscillator);
-
-					setTimeout(() => {
-						gainNode.gain.value = 0;
-					}, length - 50);
-
-					setTimeout(() => {
-						playing = playing.filter((osc) => osc !== oscillator);
-						oscillator.stop();
-					}, length);
-				};
-
-				play(when);
-			};
-
-			const PLAY_CHORD = {
-				SOLID: 'Solid',
-				BROKEN_SUSTAINED: 'Broken',
-				BROKEN: 'Broken (Individual Notes)',
-			};
-
-			// solid chord | broken chord sustained | broken chord each note
-
-			const playChord = (chordType, ...freqs) => {
-				console.log('Playing chord');
-				const gainValue = 1 / freqs.length;
-				const length =
-					1e3 +
-					(chordType === PLAY_CHORD.BROKEN_SUSTAINED
-						? 300 * freqs.length
-						: 0);
-
-				freqs.forEach((freq, i) => {
-					const when =
-						chordType === PLAY_CHORD.BROKEN_SUSTAINED
-							? audioContext.currentTime + (300 * i) / 1e3
-							: 0;
-
-					playSound(freq, {
-						gainValue,
-						pan: (2 / freqs.length) * i + 1 - 2,
-						when,
-						length,
-					});
-				});
-
-				return length;
-			};
-
-			const cChord = [261.63, 329.63, 392.0];
-			const eChord = [82.41, 123.5, 164.8, 207.7, 246.9, 329.6];
-
-			const createChord = (text = 'I') => {
-				const degree = text.match(/[IViv]+/)[0];
-
-				const stackedInterval = +text.match(/\d+/g)?.[0] || undefined;
-
-				// The order here matters!
-				let qualityExplicit = false;
-				let quality =
-					degree === degree.toUpperCase() ? QUALITY.MAJ : QUALITY.MIN;
-				if (stackedInterval >= 7) {
-					quality = QUALITY.DOM;
-					qualityExplicit = true;
-				}
-				if (text.match(/\+/)) {
-					quality = QUALITY.AUG;
-					qualityExplicit = true;
-				}
-				if (text.match(/M/)) {
-					quality = QUALITY.MAJ;
-					qualityExplicit = true;
-				}
-				if (text.match(/m/)) {
-					quality = QUALITY.MIN;
-					qualityExplicit = true;
-				}
-				if (text.match(/dim/)) {
-					quality = QUALITY.DIM;
-					qualityExplicit = true;
-				}
-
-				const omit5 = text.match(/no5/);
-
-				const restOfName = text.replace(degree, '');
-
-				let degreeIndex;
-				switch (degree.toLowerCase()) {
-					case 'i':
-						degreeIndex = 0;
-						break;
-					case 'ii':
-						degreeIndex = 1;
-						break;
-					case 'iii':
-						degreeIndex = 2;
-						break;
-					case 'iv':
-						degreeIndex = 3;
-						break;
-					case 'v':
-						degreeIndex = 4;
-						break;
-					case 'vi':
-						degreeIndex = 5;
-						break;
-					case 'vii':
-						degreeIndex = 6;
-						break;
-					default:
-						throw new Error();
-				}
-
-				const chord = {
-					rawInput: text,
-					degree,
-					degreeIndex,
-					omit5,
-					quality,
-					inversion: 0,
-					inversionShift: 0,
-					qualityExplicit,
-					stackedInterval,
-					setHTML: (div, key) => {
-						div.innerHTML = '';
-						div.textContent = key
-							? notes[
-									(majorScaleOffsets[chord.degreeIndex] +
-										noteToIndexMap[key]) %
-										12
-							  ]
-							: chord.degree;
-
-						const span = createElement(undefined, 'span');
-						span.textContent = '';
-
-						if (chord.qualityExplicit) {
-							switch (chord.quality) {
-								case QUALITY.MAJ:
-									span.textContent += 'Δ';
-									break;
-								case QUALITY.MIN:
-									span.textContent += 'm';
-									break;
-								case QUALITY.AUG:
-									span.textContent += '+';
-									break;
-								case QUALITY.DIM:
-									span.textContent += 'dim';
-									break;
-								case QUALITY.DOM:
-									// nothing
-									break;
-							}
-						} else {
-							if (key && chord.quality === QUALITY.MIN) {
-								span.textContent += 'm';
-							}
-						}
-
-						if (chord.stackedInterval)
-							span.textContent += chord.stackedInterval;
-
-						div.append(span);
-					},
-					getNotes: (key = 'C') => {
-						const keyIndex = noteToIndexMap[key];
-
-						const rawOffsets = new Set([1, 3, 5]);
-
-						if (chord.omit5) {
-							rawOffsets.delete(5);
-						}
-
-						const additionalOffsets = [];
-
-						if (chord.stackedInterval) {
-							additionalOffsets.push(chord.stackedInterval);
-							for (
-								let o = +chord.stackedInterval - 2;
-								o > 5;
-								o -= 2
-							) {
-								additionalOffsets.push(o);
-							}
-						}
-
-						additionalOffsets.sort();
-						additionalOffsets.forEach((o) => rawOffsets.add(o));
-
-						const tempOffsets = Array.from(rawOffsets)
-							.map((v) => v - 1)
-							.sort((a, b) => +a - +b);
-
-						const noteOffsets = tempOffsets
-							.map(
-								(v) =>
-									majorScaleOffsets[
-										v % majorScaleOffsets.length
-									] +
-									Math.floor(v / majorScaleOffsets.length) *
-										12,
-							)
-							.map(
-								(v) => v + majorScaleOffsets[chord.degreeIndex],
-							);
-
-						switch (quality) {
-							case QUALITY.MAJ: {
-								// do nothing
-								break;
-							}
-
-							case QUALITY.MIN: {
-								--noteOffsets[1];
-								break;
-							}
-
-							case QUALITY.AUG: {
-								if (chord.omit5) {
-									++noteOffsets[1];
-								} else {
-									++noteOffsets[2];
-								}
-								break;
-							}
-
-							case QUALITY.DIM: {
-								if (chord.omit5) {
-									--noteOffsets[1];
-								} else {
-									--noteOffsets[1];
-									--noteOffsets[2];
-								}
-								break;
-							}
-
-							case QUALITY.DOM: {
-								if (chord.omit5) {
-									--noteOffsets[2];
-								} else {
-									--noteOffsets[3];
-								}
-							}
-						}
-
-						const chordNotes = noteOffsets.map((o) => o + keyIndex);
-
-						// do the inversion
-						if (chord.inversion) {
-							// NOTE: this only works for triads atm
-							for (let i = 0; i < chord.inversion; ++i) {
-								const note = chordNotes.shift();
-								chordNotes.push(note + 12);
-							}
-
-							for (let i = 0; i < chordNotes.length; ++i) {
-								chordNotes[i] += chord.inversionShift * 12;
-							}
-						}
-
-						return chordNotes;
-					},
-				};
-
-				return chord;
-			};
-
 			const somethingProgression = {
 				name: 'The "Something" Progression',
-				chords: ['I', 'IM7', 'I7', 'IV'].map(createChord),
+				chords: ['I', 'IM7', 'I7', 'IV'].map(generateChord),
 				theme: 'orange',
 				keys: [...defaultKeys],
 			};
@@ -916,19 +496,20 @@
 			const augmentedClimbProgression = {
 				name: 'Augmented climb chord progression',
 				chords: ['I', 'I+', 'I6[no5]', 'I7[no5]', 'IV'].map(
-					createChord,
+					generateChord,
 				),
 				theme: 'blue',
 				keys: [...defaultKeys],
 			};
 
+			// somehow need to bake this into the chord letters, is there a standard for that?
 			augmentedClimbProgression.chords[4].inversion = 2;
 			augmentedClimbProgression.chords[4].inversionShift = -1;
 
 			const test_allMajorProgressions = {
 				name: '[Debug] All Major Degrees',
 				chords: ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'].map(
-					createChord,
+					generateChord,
 				),
 				theme: 'red',
 				keys: [...defaultKeys],
@@ -937,7 +518,7 @@
 			const test_allWhiteKeysProgressions = {
 				name: '[Debug] All White Keys',
 				chords: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'VIIdim'].map(
-					createChord,
+					generateChord,
 				),
 				theme: 'red',
 				keys: [...defaultKeys],
@@ -945,7 +526,9 @@
 
 			const test_scaledIntervalsProgression = {
 				name: '[Debug] Scaled Intervals',
-				chords: ['I', 'I6', 'I7', 'I9', 'I11', 'I13'].map(createChord),
+				chords: ['I', 'I6', 'I7', 'I9', 'I11', 'I13'].map(
+					generateChord,
+				),
 				theme: 'red',
 				keys: [...defaultKeys],
 			};
@@ -971,9 +554,17 @@
 					// change the keyboard layout
 					configureKeyboard(mainKeyboardElem, keys, currentKey);
 
-					[...showChordsContent.children].forEach((keysElem, i) => {
-						configureKeyboard(keysElem, keys, currentKey);
+					[...showChordsContent.children].forEach((wrapper, i) => {
+						// NOTE: currently... this would never change
+						chords[i].setHTML(wrapper.querySelector('.degree'));
 
+						chords[i].setHTML(
+							wrapper.querySelector('.name'),
+							currentKey,
+						);
+
+						const keysElem = wrapper.querySelector('.keys');
+						configureKeyboard(keysElem, keys, currentKey);
 						highlightChord(keysElem, chords[i], currentKey);
 					});
 				};
@@ -1012,17 +603,17 @@
 						// if we've stopped it
 						if (!isPlayingProgression) return;
 
+						// play it
 						onPlay(index);
 
 						console.log('Playing: ', index);
-						// play it
-						// set up the interval
 
 						const frequences = chords[index]
 							.getNotes(currentKey)
 							.map((n) => getFrequency(4, n));
 						const length = playChord(curChordType, ...frequences);
 
+						// set up the interval
 						progressionTimeout = setTimeout(() => {
 							if (++index >= chords.length) {
 								callback();
@@ -1110,10 +701,10 @@
 				});
 				settings.append(playButton);
 
-				let curChordType = PLAY_CHORD.BROKEN_SUSTAINED;
+				let curChordType = CHORD_STYLE.BROKEN_SUSTAINED;
 
 				// Settings / Chord type
-				[PLAY_CHORD.BROKEN_SUSTAINED, PLAY_CHORD.SOLID].forEach(
+				[CHORD_STYLE.BROKEN_SUSTAINED, CHORD_STYLE.SOLID].forEach(
 					(chordType, i) => {
 						const wrapper = createElement('option');
 						settings.append(wrapper);
@@ -1128,6 +719,7 @@
 							curChordType = chordType;
 						});
 						radio.id = id;
+						if (i === 0) radio.checked = true;
 						wrapper.append(radio);
 
 						const label = createElement(undefined, 'label');
@@ -1153,6 +745,7 @@
 						changeKey(note);
 					});
 					radio.id = id;
+					if (note === 'C') radio.checked = true;
 					wrapper.append(radio);
 
 					const label = createElement(undefined, 'label');
@@ -1230,30 +823,36 @@
 
 					progressionElem.append(degreeElem);
 
-					const keyboardElem = createElement('keys hide-note-names');
-					createKeyboard(keyboardElem, keys, currentKey);
-					showChordsContent.append(keyboardElem);
+					const progressionItemWrapper =
+						createElement('progression-item');
+					{
+						const chordTitle = createElement(undefined, 'h4');
+						progressionItemWrapper.append(chordTitle);
 
-					highlightChord(keyboardElem, chord, currentKey);
+						const chordIndexElem = createElement('index', 'span');
+						chordIndexElem.textContent = String(i + 1);
+						chordTitle.append(chordIndexElem);
+
+						const chordTypeName = createElement('degree', 'span');
+						chord.setHTML(chordTypeName);
+						chordTitle.append(chordTypeName);
+
+						const chordName = createElement('name', 'span');
+						chord.setHTML(chordName, currentKey);
+						chordTitle.append(chordName);
+
+						const keyboardElem = createElement(
+							'keys hide-note-names',
+						);
+						createKeyboard(keyboardElem, keys, currentKey);
+						progressionItemWrapper.append(keyboardElem);
+
+						highlightChord(keyboardElem, chord, currentKey);
+					}
+					showChordsContent.append(progressionItemWrapper);
 				});
 
 				document.body.append(wrapper);
-
-				[
-					...document.body.querySelectorAll(
-						`input[type="radio"][value="${PLAY_CHORD.BROKEN_SUSTAINED}"]`,
-					),
-				].forEach((input) => {
-					input.checked = true;
-				});
-
-				[
-					...document.body.querySelectorAll(
-						`input[type="radio"][value="C"]`,
-					),
-				].forEach((input) => {
-					input.checked = true;
-				});
 			});
 		</script>
 	</body>
