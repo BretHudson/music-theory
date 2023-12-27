@@ -38,6 +38,8 @@
 				--dbp-blue-raw: 60 172 247;
 				--dbp-orange: #d66e11;
 				--dbp-orange-raw: 214 110 17;
+				--dbp-green: #16ad66;
+				--dbp-green-raw: 22 173 102;
 				--dbp-grey: #c2c1c2;
 			}
 
@@ -326,6 +328,7 @@
 					}
 					text-transform: uppercase;
 					text-align: center;
+					text-wrap: balance;
 				}
 			}
 
@@ -501,8 +504,16 @@
 			const somethingProgression = {
 				name: 'The "Something" Progression',
 				chords: ['I', 'IM7', 'I7', 'IV'].map(generateChord),
-				theme: 'orange',
 				keys: [...defaultKeys],
+				theme: 'orange',
+				video: {
+					link: 'https://www.youtube.com/watch?v=AmqiQFyCAGY',
+					title: 'Songs that use the Something chord progression',
+					channel: {
+						name: 'David Bennett Piano',
+						link: 'https://www.youtube.com/@DavidBennettPiano',
+					},
+				},
 			};
 
 			somethingProgression.chords[3].inversion = 2;
@@ -513,21 +524,53 @@
 				chords: ['I', 'I+', 'I6[no5]', 'I7[no5]', 'IV'].map(
 					generateChord,
 				),
-				theme: 'blue',
 				keys: [...defaultKeys],
+				theme: 'blue',
+				video: {
+					link: 'https://www.youtube.com/watch?v=ixIS64xvWSQ',
+					title: 'Songs that use the Augmented climb chord progression',
+					channel: {
+						name: 'David Bennett Piano',
+						link: 'https://www.youtube.com/@DavidBennettPiano',
+					},
+				},
 			};
 
 			// somehow need to bake this into the chord letters, is there a standard for that?
 			augmentedClimbProgression.chords[4].inversion = 2;
 			augmentedClimbProgression.chords[4].inversionShift = -1;
 
+			const faceFallProgression = {
+				name: 'FACE FABD EGBD EGAC DFAC DFGB CEGC',
+				chords: [
+					'IVM7',
+					'iim6',
+					'iiim7',
+					'I6',
+					'iim7',
+					'VIIdimadd#5',
+					'Iadd8',
+				].map(generateChord),
+				keys: [...defaultKeys],
+				theme: 'green',
+				video: {
+					link: 'https://www.youtube.com/watch?v=7B-sSnZbNtw',
+				},
+			};
+
+			// somehow need to bake this into the chord letters, is there a standard for that?
+			faceFallProgression.chords[1].inversion = 1;
+			faceFallProgression.chords[3].inversion = 1;
+			faceFallProgression.chords[5].inversion = 1;
+			faceFallProgression.chords[5].inversionShift = -1;
+
 			const test_allMajorProgressions = {
 				name: '[Debug] All Major Degrees',
 				chords: ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'].map(
 					generateChord,
 				),
-				theme: 'red',
 				keys: [...defaultKeys],
+				theme: 'red',
 			};
 
 			const test_allWhiteKeysProgressions = {
@@ -535,8 +578,8 @@
 				chords: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'VIIdim'].map(
 					generateChord,
 				),
-				theme: 'red',
 				keys: [...defaultKeys],
+				theme: 'red',
 			};
 
 			const test_scaledIntervalsProgression = {
@@ -551,6 +594,7 @@
 			const progressions = [
 				somethingProgression,
 				augmentedClimbProgression,
+				faceFallProgression,
 				test_scaledIntervalsProgression,
 				test_allMajorProgressions,
 				test_allWhiteKeysProgressions,

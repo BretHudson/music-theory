@@ -154,7 +154,10 @@ const playChord = (chordType, ...freqs) => {
 const generateChord = (text = 'I') => {
 	const degree = text.match(/[IViv]+/)[0];
 
-	const stackedInterval = +text.match(/\d+/g)?.[0] || undefined;
+	const addedInterval = text.match(/add([b#]?\d+)/)?.[1] || undefined;
+	const stackedInterval = addedInterval
+		? undefined
+		: +text.match(/\d+/g)?.[0] || undefined;
 
 	// The order here matters!
 	let qualityExplicit = false;
@@ -220,6 +223,7 @@ const generateChord = (text = 'I') => {
 		inversion: 0,
 		inversionShift: 0,
 		qualityExplicit,
+		addedInterval,
 		stackedInterval,
 		setHTML: (div, key) => {
 			div.innerHTML = '';
@@ -258,7 +262,9 @@ const generateChord = (text = 'I') => {
 				}
 			}
 
-			if (chord.stackedInterval)
+			if (chord.addedInterval)
+				span.textContent += `add${chord.addedInterval}`;
+			else if (chord.stackedInterval)
 				span.textContent += chord.stackedInterval;
 
 			div.append(span);
@@ -289,12 +295,29 @@ const generateChord = (text = 'I') => {
 				.sort((a, b) => +a - +b);
 
 			const noteOffsets = tempOffsets
+				.concat(
+					chord.addedInterval
+						? [chord.addedInterval.replace(/[b#]/, '') - 1]
+						: [],
+				)
 				.map(
 					(v) =>
 						majorScaleOffsets[v % majorScaleOffsets.length] +
 						Math.floor(v / majorScaleOffsets.length) * 12,
 				)
-				.map((v) => v + majorScaleOffsets[chord.degreeIndex]);
+				.map((v) => v + majorScaleOffsets[chord.degreeIndex])
+				.map((v, i) => {
+					if (i < tempOffsets.length) return v;
+
+					switch (chord.addedInterval.substring(0, 1)) {
+						case 'b':
+							return v - 1;
+						case '#':
+							return v + 1;
+					}
+					return v;
+				})
+				.sort((a, b) => +a - +b);
 
 			switch (quality) {
 				case QUALITY.MAJ: {
@@ -304,6 +327,8 @@ const generateChord = (text = 'I') => {
 
 				case QUALITY.MIN: {
 					--noteOffsets[1];
+					if (noteOffsets.length >= 4 && chord.stackedInterval >= 7)
+						--noteOffsets[3];
 					break;
 				}
 
