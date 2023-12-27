@@ -555,6 +555,11 @@
 				theme: 'green',
 				video: {
 					link: 'https://www.youtube.com/watch?v=7B-sSnZbNtw',
+					title: 'FACE FABD EGBD EGAC DFAC DFGB CEGC',
+					channel: {
+						name: 'idkcat',
+						link: 'https://www.youtube.com/@2233-idkcat',
+					},
 				},
 			};
 
@@ -600,143 +605,304 @@
 				test_allWhiteKeysProgressions,
 			];
 
-			progressions.forEach(({ name, chords, theme, keys }, progIndex) => {
-				let currentKey = 'C';
+			progressions.forEach(
+				({ name, chords, theme, keys, video }, progIndex) => {
+					let currentKey = 'C';
 
-				const changeKey = (newKey = 'C') => {
-					currentKey = newKey;
+					const changeKey = (newKey = 'C') => {
+						currentKey = newKey;
 
-					chords.forEach((chord, i) => {
-						chord.setHTML(chordTextElements[i], currentKey);
-					});
-
-					// change the keyboard layout
-					configureKeyboard(mainKeyboardElem, keys, currentKey);
-
-					[...showChordsContent.children].forEach((wrapper, i) => {
-						// NOTE: currently... this would never change
-						chords[i].setHTML(wrapper.querySelector('.degree'));
-
-						chords[i].setHTML(
-							wrapper.querySelector('.name'),
-							currentKey,
-						);
-
-						const keysElem = wrapper.querySelector('.keys');
-						configureKeyboard(keysElem, keys, currentKey);
-						highlightChord(keysElem, chords[i], currentKey);
-					});
-				};
-
-				const wrapper = createElement('wrapper');
-				wrapper.style.setProperty('--theme', `var(--dbp-${theme})`);
-				wrapper.style.setProperty(
-					'--theme-raw',
-					`var(--dbp-${theme}-raw)`,
-				);
-
-				// <h3>
-				const titleElem = createElement(undefined, 'h3');
-				titleElem.textContent = name;
-				wrapper.append(titleElem);
-
-				// Progression
-				const progressionElem = createElement('progression');
-				progressionElem.style.setProperty('--length', chords.length);
-				wrapper.append(progressionElem);
-
-				// Settings
-				const settings = createElement('settings');
-				wrapper.append(settings);
-
-				// Settings / Play button
-				const playButton = createElement('play', 'button');
-				playButton.textContent = 'Play';
-				let isPlayingProgression = false;
-
-				let progressionTimeout;
-
-				const playProgression = (onPlay, callback) => {
-					let index = 0;
-					const playNextNote = () => {
-						// if we've stopped it
-						if (!isPlayingProgression) return;
-
-						// play it
-						onPlay(index);
-
-						console.log('Playing: ', index);
-
-						const frequences = chords[index]
-							.getNotes(currentKey)
-							.map((n) => getFrequency(4, n));
-						const length = playChord(curChordType, ...frequences);
-
-						// set up the interval
-						progressionTimeout = setTimeout(() => {
-							if (++index >= chords.length) {
-								callback();
-								return;
-							}
-
-							playNextNote();
-						}, length + 100);
-					};
-
-					playNextNote();
-				};
-
-				const stopProgression = () => {
-					isPlayingProgression = false;
-
-					clearTimeout(progressionTimeout);
-					stopAllNotes();
-
-					progressionElem.classList.remove('playing');
-
-					progressionElem
-						.querySelectorAll('.highlight')
-						?.forEach((chord) => {
-							chord.classList.remove('highlight');
+						chords.forEach((chord, i) => {
+							chord.setHTML(chordTextElements[i], currentKey);
 						});
 
-					const keys = [
-						...mainKeyboardElem.querySelectorAll('.highlight'),
-					];
-					keys.forEach((key) => key.classList.remove('highlight'));
+						// change the keyboard layout
+						configureKeyboard(mainKeyboardElem, keys, currentKey);
 
-					playButton.textContent = 'Play';
-				};
+						[...showChordsContent.children].forEach(
+							(wrapper, i) => {
+								// NOTE: currently... this would never change
+								chords[i].setHTML(
+									wrapper.querySelector('.degree'),
+								);
 
-				let stopTimeout;
-				playButton.addEventListener('click', () => {
-					if (isPlayingProgression) {
-						clearTimeout(stopTimeout);
-						stopProgression();
-						return;
+								chords[i].setHTML(
+									wrapper.querySelector('.name'),
+									currentKey,
+								);
+
+								const keysElem = wrapper.querySelector('.keys');
+								configureKeyboard(keysElem, keys, currentKey);
+								highlightChord(keysElem, chords[i], currentKey);
+							},
+						);
+					};
+
+					const wrapper = createElement('wrapper');
+					wrapper.style.setProperty('--theme', `var(--dbp-${theme})`);
+					wrapper.style.setProperty(
+						'--theme-raw',
+						`var(--dbp-${theme}-raw)`,
+					);
+
+					// <h3>
+					const titleElem = createElement(undefined, 'h3');
+					titleElem.textContent = name;
+					wrapper.append(titleElem);
+
+					// link
+					console.log({ video });
+					if (video) {
+						const videoWrapper = createElement(undefined, 'div');
+
+						const text = createElement(undefined, 'span');
+						text.append('From: ');
+						videoWrapper.append(text);
+
+						const anchor = createElement(undefined, 'a');
+						anchor.textContent = video.title;
+						anchor.href = video.link;
+						text.append(anchor);
+
+						if (video.channel) {
+							text.append(` by `);
+
+							const channelAnchor = createElement(undefined, 'a');
+							channelAnchor.textContent = video.channel.name;
+							channelAnchor.href = video.channel.link;
+							text.append(channelAnchor);
+						}
+
+						wrapper.append(videoWrapper);
 					}
 
-					isPlayingProgression = true;
+					// Progression
+					const progressionElem = createElement('progression');
+					progressionElem.style.setProperty(
+						'--length',
+						chords.length,
+					);
+					wrapper.append(progressionElem);
 
-					progressionElem.classList.add('playing');
+					// Settings
+					const settings = createElement('settings');
+					wrapper.append(settings);
 
-					// disable clicking on chords
+					// Settings / Play button
+					const playButton = createElement('play', 'button');
+					playButton.textContent = 'Play';
+					let isPlayingProgression = false;
 
-					playButton.textContent = 'Stop';
+					let progressionTimeout;
 
-					playProgression(
-						// onPlay
-						(index) => {
-							progressionElem
-								.querySelectorAll('.highlight')
-								?.forEach((chord) => {
-									chord.classList.remove('highlight');
-								});
+					const playProgression = (onPlay, callback) => {
+						let index = 0;
+						const playNextNote = () => {
+							// if we've stopped it
+							if (!isPlayingProgression) return;
 
-							progressionElem.children
-								.item(index)
-								.classList.add('highlight');
+							// play it
+							onPlay(index);
 
+							console.log('Playing: ', index);
+
+							const frequences = chords[index]
+								.getNotes(currentKey)
+								.map((n) => getFrequency(4, n));
+							const length = playChord(
+								curChordType,
+								...frequences,
+							);
+
+							// set up the interval
+							progressionTimeout = setTimeout(() => {
+								if (++index >= chords.length) {
+									callback();
+									return;
+								}
+
+								playNextNote();
+							}, length + 100);
+						};
+
+						playNextNote();
+					};
+
+					const stopProgression = () => {
+						isPlayingProgression = false;
+
+						clearTimeout(progressionTimeout);
+						stopAllNotes();
+
+						progressionElem.classList.remove('playing');
+
+						progressionElem
+							.querySelectorAll('.highlight')
+							?.forEach((chord) => {
+								chord.classList.remove('highlight');
+							});
+
+						const keys = [
+							...mainKeyboardElem.querySelectorAll('.highlight'),
+						];
+						keys.forEach((key) =>
+							key.classList.remove('highlight'),
+						);
+
+						playButton.textContent = 'Play';
+					};
+
+					let stopTimeout;
+					playButton.addEventListener('click', () => {
+						if (isPlayingProgression) {
+							clearTimeout(stopTimeout);
+							stopProgression();
+							return;
+						}
+
+						isPlayingProgression = true;
+
+						progressionElem.classList.add('playing');
+
+						// disable clicking on chords
+
+						playButton.textContent = 'Stop';
+
+						playProgression(
+							// onPlay
+							(index) => {
+								progressionElem
+									.querySelectorAll('.highlight')
+									?.forEach((chord) => {
+										chord.classList.remove('highlight');
+									});
+
+								progressionElem.children
+									.item(index)
+									.classList.add('highlight');
+
+								const keys = [
+									...mainKeyboardElem.querySelectorAll(
+										'.highlight',
+									),
+								];
+								keys.forEach((key) =>
+									key.classList.remove('highlight'),
+								);
+
+								highlightChord(
+									mainKeyboardElem,
+									chords[index],
+									currentKey,
+								);
+							},
+							// onComplete
+							() => {
+								stopProgression();
+							},
+						);
+					});
+					settings.append(playButton);
+
+					let curChordType = CHORD_STYLE.BROKEN_SUSTAINED;
+
+					// Settings / Chord type
+					[CHORD_STYLE.BROKEN_SUSTAINED, CHORD_STYLE.SOLID].forEach(
+						(chordType, i) => {
+							const wrapper = createElement('option');
+							settings.append(wrapper);
+
+							const id = `${progIndex}-${i}`;
+
+							const radio = createElement(undefined, 'input');
+							radio.setAttribute('type', 'radio');
+							radio.setAttribute(
+								'name',
+								`chord-type-${progIndex}`,
+							);
+							radio.setAttribute('value', chordType);
+							radio.addEventListener('click', () => {
+								curChordType = chordType;
+							});
+							radio.id = id;
+							if (i === 0) radio.checked = true;
+							wrapper.append(radio);
+
+							const label = createElement(undefined, 'label');
+							label.setAttribute('for', id);
+							label.textContent = chordType;
+							wrapper.append(label);
+						},
+					);
+
+					// Settings / Key
+					const keyOptionsWrapper = createElement('keyOptions');
+					notes.forEach((note, i) => {
+						const wrapper = createElement('option');
+						keyOptionsWrapper.append(wrapper);
+
+						const id = `${progIndex}-key-${i}`;
+
+						const radio = createElement(undefined, 'input');
+						radio.setAttribute('type', 'radio');
+						radio.setAttribute('name', `key-${progIndex}`);
+						radio.setAttribute('value', note);
+						radio.addEventListener('click', () => {
+							changeKey(note);
+						});
+						radio.id = id;
+						if (note === 'C') radio.checked = true;
+						wrapper.append(radio);
+
+						const label = createElement(undefined, 'label');
+						label.setAttribute('for', id);
+						label.textContent = note;
+						wrapper.append(label);
+					});
+					settings.append(keyOptionsWrapper);
+
+					// main keyboard
+					const mainKeyboardElem = createElement(
+						'keys hide-note-names',
+					);
+					createKeyboard(mainKeyboardElem, keys, currentKey);
+					wrapper.append(mainKeyboardElem);
+
+					// <details>
+					const showChords = createElement(undefined, 'details');
+					// showChords.setAttribute('open', undefined);
+					wrapper.append(showChords);
+
+					const showChordsSummary = createElement(
+						undefined,
+						'summary',
+					);
+					showChordsSummary.textContent = 'See all chord shapes';
+					showChords.append(showChordsSummary);
+
+					const showChordsContent = createElement('contents');
+					showChords.append(showChordsContent);
+
+					const chordTextElements = [];
+
+					// each chord
+					chords.forEach((chord, i) => {
+						const degreeElem = createElement('degree');
+
+						degreeElem.addEventListener('click', () => {
+							stopAllNotes();
+
+							const frequences = chord
+								.getNotes(currentKey)
+								.map((n) => getFrequency(4, n));
+							playChord(curChordType, ...frequences);
+						});
+
+						degreeElem.addEventListener('mouseenter', () => {
+							highlightChord(mainKeyboardElem, chord, currentKey);
+						});
+
+						degreeElem.addEventListener('mouseleave', () => {
 							const keys = [
 								...mainKeyboardElem.querySelectorAll(
 									'.highlight',
@@ -745,174 +911,69 @@
 							keys.forEach((key) =>
 								key.classList.remove('highlight'),
 							);
-
-							highlightChord(
-								mainKeyboardElem,
-								chords[index],
-								currentKey,
-							);
-						},
-						// onComplete
-						() => {
-							stopProgression();
-						},
-					);
-				});
-				settings.append(playButton);
-
-				let curChordType = CHORD_STYLE.BROKEN_SUSTAINED;
-
-				// Settings / Chord type
-				[CHORD_STYLE.BROKEN_SUSTAINED, CHORD_STYLE.SOLID].forEach(
-					(chordType, i) => {
-						const wrapper = createElement('option');
-						settings.append(wrapper);
-
-						const id = `${progIndex}-${i}`;
-
-						const radio = createElement(undefined, 'input');
-						radio.setAttribute('type', 'radio');
-						radio.setAttribute('name', `chord-type-${progIndex}`);
-						radio.setAttribute('value', chordType);
-						radio.addEventListener('click', () => {
-							curChordType = chordType;
 						});
-						radio.id = id;
-						if (i === 0) radio.checked = true;
-						wrapper.append(radio);
 
-						const label = createElement(undefined, 'label');
-						label.setAttribute('for', id);
-						label.textContent = chordType;
-						wrapper.append(label);
-					},
-				);
+						const nameElem = createElement('name');
+						nameElem.append(createElement());
+						const nameText = createElement('text');
+						chord.setHTML(nameText);
+						nameElem.append(nameText);
 
-				// Settings / Key
-				const keyOptionsWrapper = createElement('keyOptions');
-				notes.forEach((note, i) => {
-					const wrapper = createElement('option');
-					keyOptionsWrapper.append(wrapper);
-
-					const id = `${progIndex}-key-${i}`;
-
-					const radio = createElement(undefined, 'input');
-					radio.setAttribute('type', 'radio');
-					radio.setAttribute('name', `key-${progIndex}`);
-					radio.setAttribute('value', note);
-					radio.addEventListener('click', () => {
-						changeKey(note);
-					});
-					radio.id = id;
-					if (note === 'C') radio.checked = true;
-					wrapper.append(radio);
-
-					const label = createElement(undefined, 'label');
-					label.setAttribute('for', id);
-					label.textContent = note;
-					wrapper.append(label);
-				});
-				settings.append(keyOptionsWrapper);
-
-				// main keyboard
-				const mainKeyboardElem = createElement('keys hide-note-names');
-				createKeyboard(mainKeyboardElem, keys, currentKey);
-				wrapper.append(mainKeyboardElem);
-
-				// <details>
-				const showChords = createElement(undefined, 'details');
-				// showChords.setAttribute('open', undefined);
-				wrapper.append(showChords);
-
-				const showChordsSummary = createElement(undefined, 'summary');
-				showChordsSummary.textContent = 'See all chord shapes';
-				showChords.append(showChordsSummary);
-
-				const showChordsContent = createElement('contents');
-				showChords.append(showChordsContent);
-
-				const chordTextElements = [];
-
-				// each chord
-				chords.forEach((chord, i) => {
-					const degreeElem = createElement('degree');
-
-					degreeElem.addEventListener('click', () => {
-						stopAllNotes();
-
-						const frequences = chord
-							.getNotes(currentKey)
-							.map((n) => getFrequency(4, n));
-						playChord(curChordType, ...frequences);
-					});
-
-					degreeElem.addEventListener('mouseenter', () => {
-						highlightChord(mainKeyboardElem, chord, currentKey);
-					});
-
-					degreeElem.addEventListener('mouseleave', () => {
-						const keys = [
-							...mainKeyboardElem.querySelectorAll('.highlight'),
-						];
-						keys.forEach((key) =>
-							key.classList.remove('highlight'),
-						);
-					});
-
-					const nameElem = createElement('name');
-					nameElem.append(createElement());
-					const nameText = createElement('text');
-					chord.setHTML(nameText);
-					nameElem.append(nameText);
-
-					const chordElem = createElement('chord');
-					chordElem.append(createElement());
-					const chordText = createElement('text');
-					chord.setHTML(chordText, currentKey);
-					chordElem.append(chordText);
-					if (i === chords.length - 1) {
+						const chordElem = createElement('chord');
 						chordElem.append(createElement());
-						chordElem.append(createElement());
-					}
+						const chordText = createElement('text');
+						chord.setHTML(chordText, currentKey);
+						chordElem.append(chordText);
+						if (i === chords.length - 1) {
+							chordElem.append(createElement());
+							chordElem.append(createElement());
+						}
 
-					chordTextElements.push(chordText);
+						chordTextElements.push(chordText);
 
-					degreeElem.append(nameElem);
-					degreeElem.append(chordElem);
+						degreeElem.append(nameElem);
+						degreeElem.append(chordElem);
 
-					progressionElem.append(degreeElem);
+						progressionElem.append(degreeElem);
 
-					const progressionItemWrapper =
-						createElement('progression-item');
-					{
-						const chordTitle = createElement(undefined, 'h4');
-						progressionItemWrapper.append(chordTitle);
+						const progressionItemWrapper =
+							createElement('progression-item');
+						{
+							const chordTitle = createElement(undefined, 'h4');
+							progressionItemWrapper.append(chordTitle);
 
-						const chordIndexElem = createElement('index', 'span');
-						chordIndexElem.textContent = String(i + 1);
-						chordTitle.append(chordIndexElem);
+							const chordIndexElem = createElement(
+								'index',
+								'span',
+							);
+							chordIndexElem.textContent = String(i + 1);
+							chordTitle.append(chordIndexElem);
 
-						const chordTypeName = createElement('degree', 'span');
-						chord.setHTML(chordTypeName);
-						chordTitle.append(chordTypeName);
+							const chordTypeName = createElement(
+								'degree',
+								'span',
+							);
+							chord.setHTML(chordTypeName);
+							chordTitle.append(chordTypeName);
 
-						const chordName = createElement('name', 'span');
-						chord.setHTML(chordName, currentKey);
-						chordTitle.append(chordName);
+							const chordName = createElement('name', 'span');
+							chord.setHTML(chordName, currentKey);
+							chordTitle.append(chordName);
 
-						const keyboardElem = createElement(
-							'keys hide-note-names',
-						);
-						createKeyboard(keyboardElem, keys, currentKey);
-						progressionItemWrapper.append(keyboardElem);
+							const keyboardElem = createElement(
+								'keys hide-note-names',
+							);
+							createKeyboard(keyboardElem, keys, currentKey);
+							progressionItemWrapper.append(keyboardElem);
 
-						highlightChord(keyboardElem, chord, currentKey);
-					}
-					showChordsContent.append(progressionItemWrapper);
-				});
+							highlightChord(keyboardElem, chord, currentKey);
+						}
+						showChordsContent.append(progressionItemWrapper);
+					});
 
-				document.body.append(wrapper);
-			});
+					document.body.append(wrapper);
+				},
+			);
 		</script>
 	</body>
 </html>
